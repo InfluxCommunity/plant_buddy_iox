@@ -23,7 +23,7 @@ cloud_org = server.config['INFLUXDB_ORG']
 cloud_bucket = server.config['INFLUXDB_BUCKET']
 cloud_token = server.config['INFLUXDB_TOKEN']
 
-graph_default = {"_field":"air_temperature", "bucket": cloud_bucket, "deviceID": "01"}
+graph_default = {"deviceID": "eui-323932326d306512"}
 
 
 influx = influxHelper(host=cloud_host, org=cloud_org, bucket=cloud_bucket, token=cloud_token)
@@ -31,11 +31,9 @@ influx = influxHelper(host=cloud_host, org=cloud_org, bucket=cloud_bucket, token
 # Get user. Currently static refrence. Used to filter sensor data in InfluxDB
 # TODO change this to login in page. 
 user = users.authorize_and_get_user(request)
-forumMea= influx.getFields(cloud_bucket)
-forumBuckets = influx.getBuckets()
+
 
 # This is our html snippets from the main_html file
-controls =  main_html.controls(forumMea,forumBuckets, graph_default)
 sidebar = main_html.createNav()
 app.layout = main_html.layout(sidebar)
 
@@ -52,14 +50,7 @@ def render_tab_content(active_tab, data):
     'active_tab' is.
     """
     if active_tab and data is not None:
-        if active_tab == "data_explorer":
-            return dbc.Row(
-                [
-                dbc.Col(controls, md=4),
-                dbc.Col( dbc.Card([dcc.Graph(figure=data["data_explorer"])],style={"width": "auto"}), md=8),
-                ]
-            )
-        elif active_tab == "temperature":
+        if active_tab == "temperature":
             return dbc.Row(
                 [
                     dbc.Col( dbc.Card([dcc.Graph(figure=data["soil_temp_graph"])],style={"width": "auto"}), md=6),
@@ -81,26 +72,22 @@ def render_tab_content(active_tab, data):
 def generate_graphs(n):
 # Generate graphs based upon pandas data frame. 
 # This is our editable graph, you can change the parameters
-    df = influx.querydata(bucket=graph_default["bucket"], sensor_name=graph_default["_field"], deviceID=graph_default["deviceID"] )
-    data_explorer = px.line(df, x="_time", y="_value", title= df.iloc[0]['_field'])
-    
+
      # This is a hard coded graph
-    df = influx.querydata(cloud_bucket, "soil_moisture", graph_default["deviceID"] )
-    soil_temp_graph = px.line(df, x="_time", y="_value", title=df.iloc[0]['_field'])
+    df = influx.querydata( "soil_moisture", graph_default["deviceID"] )
+    soil_temp_graph = px.line(df, x="time", y="soil_moisture", title="Soil Moisture")
 
-    df = influx.querydata(cloud_bucket, "air_temperature", graph_default["deviceID"] )
-    air_temp_graph= px.line(df, x="_time", y="_value", title=df.iloc[0]['_field'])
+    df = influx.querydata( "air_temperature", graph_default["deviceID"] )
+    air_temp_graph= px.line(df, x="time", y="air_temperature", title="Air Temperature")
 
-    df = influx.querydata(cloud_bucket, "humidity", graph_default["deviceID"] )
-    humidity_graph= px.line(df, x="_time", y="_value", title=df.iloc[0]['_field'])
+    df = influx.querydata( "humidity", graph_default["deviceID"] )
+    humidity_graph= px.line(df, x="time", y="humidity", title="humidity")
 
-    #This queries our hard coded flux query
-   # df = influx.querydataStatic()
-    df = influx.querydata(cloud_bucket, "light", graph_default["deviceID"] )
-    light_graph= px.line(df, x="_time", y="_value", title=df.iloc[0]['_field'])
+    df = influx.querydata( "light", graph_default["deviceID"] )
+    light_graph= px.line(df, x="time", y="light", title="light")
 
     # save figures in a dictionary for sending to the dcc.Store
-    return {"data_explorer": data_explorer, 
+    return {
             "soil_temp_graph": soil_temp_graph, 
             "air_temp_graph": air_temp_graph, 
             "humidity_graph": humidity_graph, 

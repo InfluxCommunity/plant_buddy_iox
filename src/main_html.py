@@ -21,12 +21,11 @@ def layout(sidebar):
             # Add your new tabs hear.
             dbc.Tabs(
                 [
-                    dbc.Tab(label="Data Explorer", tab_id="data_explorer"),
                     dbc.Tab(label="Soil and Room Temperature", tab_id="temperature"),
                     dbc.Tab(label="Room Humidity and Light", tab_id="hum_and_light"),
                 ],
                 id="tabs",
-                active_tab="data_explorer",
+                active_tab="temperature",
             ),
             html.Div(id="tab-content", className="p-4"),], style=MAIN_STYLE)
         ]
@@ -34,33 +33,7 @@ def layout(sidebar):
     return layout
 
 
-def controls(forumMea,forumBuckets, graph_default):
-    # Creates a drop down forum which queries influx for both a list of buckets and fields
-    control = dbc.Card(
-        [
 
-                dbc.Label("Fields"),
-                dcc.Dropdown(
-                    id="y-variable",
-                    options=[
-                        {"label": col, "value": col} for col in forumMea
-                    ],
-                    value="Select a Field",
-                ),
-      
-
-                dbc.Label("Bucket"),
-                dcc.Dropdown(
-                    id="bucket",
-                    options=[
-                        {"label": col, "value": col} for col in forumBuckets
-                    ],
-                    value=graph_default["bucket"],
-                ),
-        ],
-        body=True,
-    )
-    return control
 
 
 def createNav():
@@ -77,7 +50,6 @@ def createNav():
     }
 
    
-
 
     image_filename = 'src/static/logo.png' # replace with your own image
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())

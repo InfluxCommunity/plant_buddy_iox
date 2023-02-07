@@ -2,6 +2,7 @@ import influxdb_client
 import pandas as pd
 from pandas.core.frame import DataFrame
 from flightsql import FlightSQLClient
+import pyarrow
 
 class influxHelper:
     def __init__(self, org, bucket, token, host="https://us-east-1-1.aws.cloud2.influxdata.com") -> None:
@@ -12,7 +13,7 @@ class influxHelper:
             timeout = 30000
     )
         
-        host = host.split(host, "://")[1]
+        host = host.split("://")[1]
         self.flight_client = FlightSQLClient(host=host,
                          token=token,
                          metadata= {'bucket-name': bucket}
@@ -47,39 +48,23 @@ class influxHelper:
                 "user": user_name}
         return data
 
-    # Getting our list of measurements for the dropdown in controls found in main_html.py
-    def getFields(self, bucket) -> list:
-        measurments = []
-        query = open("flux/fields.flux").read().format(bucket)
-        result = self.query_api.query(query, org=self.cloud_org)
-        for table in result:
-            for record in table:
-                measurments.append(record["_value"])
-        return measurments
-    
-    # Getting our list of buckets for the dropdown in controls found in main_html.py
-    def getBuckets(self) -> list:
-        buckets = []
-        query = 'buckets()'
-        result = self.query_api.query(query, org=self.cloud_org)
-        for table in result:
-            for record in table:
-                buckets.append(record["name"])
-        return buckets
+ 
 
     # Wrapper function used to query InfluxDB> Calls Flux script with paramaters. Data query to data frame.
-    def querydata(self, bucket, sensor_name, deviceID) -> DataFrame:       
-        query = open("flux/graph.flux").read()
-        params = {
-            '_bucket': bucket,
-            '_sensor': sensor_name,
-            '_device': deviceID
-        }
-        result = self.query_api.query_data_frame(query, org=self.cloud_org, params=params )
-        return result
+    def querydata(self, sensor_name, deviceID) -> DataFrame:       
+ 
+        query = self.flight_client.execute(f"SELECT {sensor_name}, time FROM sensor_data WHERE time > (NOW() - INTERVAL '2 HOURS') AND device_id='{deviceID}'")
+        
+        # Create reader to consume result
+        reader = self.flight_client.do_get(query.endpoints[0].ticket)
+
+        # Read all data into a pyarrow.Table
+        Table = reader.read_all()
+        print(Table)
+
+        # Convert to Pandas DataFrame
+        df = Table.to_pandas()
+        df = df.sort_values(by="time")
+        print(df)
+        return df
     
-    # Wrapper function used to query InfluxDB> Calls Flux script with no paramaters.
-    def querydataStatic(self) -> DataFrame:
-        query = open("flux/graph_static.flux").read()
-        result = self.query_api.query_data_frame(query, org=self.cloud_org)
-        return result
