@@ -1,6 +1,7 @@
 import influxdb_client
 import pandas as pd
 from pandas.core.frame import DataFrame
+from flightsql import FlightSQLClient
 
 class influxHelper:
     def __init__(self, org, bucket, token, host="https://us-east-1-1.aws.cloud2.influxdata.com") -> None:
@@ -10,6 +11,12 @@ class influxHelper:
             org = org,
             timeout = 30000
     )
+        
+        host = host.split(host, "://")[1]
+        self.flight_client = FlightSQLClient(host=host,
+                         token=token,
+                         metadata= {'bucket-name': bucket}
+                         )
 
     
         self.cloud_bucket = bucket
