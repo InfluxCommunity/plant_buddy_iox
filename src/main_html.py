@@ -21,19 +21,17 @@ def layout(sidebar):
             # Add your new tabs hear.
             dbc.Tabs(
                 [
+                    dbc.Tab(label="Overall Light", tab_id="light"),
                     dbc.Tab(label="Soil and Room Temperature", tab_id="temperature"),
-                    dbc.Tab(label="Room Humidity and Light", tab_id="hum_and_light"),
+                    dbc.Tab(label="Room Humidity and Soil Moisture", tab_id="hum_and_moisture")
                 ],
                 id="tabs",
-                active_tab="temperature",
+                active_tab="light",
             ),
             html.Div(id="tab-content", className="p-4"),], style=MAIN_STYLE)
         ]
     )
     return layout
-
-
-
 
 
 def createNav():
@@ -49,7 +47,6 @@ def createNav():
         "background-color": "#f8f9fa",
     }
 
-   
 
     image_filename = 'src/static/logo.png' # replace with your own image
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())

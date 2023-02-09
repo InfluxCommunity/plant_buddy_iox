@@ -1,3 +1,5 @@
+Note: This Project is currently being worked on and improved
+
 # Plant Buddy with Dash
 
 This demo is based of the [Plant Buddy IoT project](https://github.com/rickspencer3/plant-buddy) created by Rick Spencer. 

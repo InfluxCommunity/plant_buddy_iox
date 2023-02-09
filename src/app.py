@@ -58,10 +58,16 @@ def render_tab_content(active_tab, data):
      
                 ]
             )
-        elif active_tab == "hum_and_light":
+        elif active_tab == "hum_and_moisture":
             return dbc.Row(
                 [   
                     dbc.Col( dbc.Card([dcc.Graph(figure=data["humidity_graph"])],style={"width": "auto"}), md=6),
+                    dbc.Col( dbc.Card([dcc.Graph(figure=data["soil_moisture"])],style={"width": "auto"}), md=6),
+                ]
+            )
+        elif active_tab == "light":
+            return dbc.Row(
+                [   
                     dbc.Col( dbc.Card([dcc.Graph(figure=data["light_graph"])],style={"width": "auto"}), md=6),
                 ]
             )
@@ -71,17 +77,17 @@ def render_tab_content(active_tab, data):
 @app.callback(Output("store", "data"), [Input("button", "n_clicks")])
 def generate_graphs(n):
 # Generate graphs based upon pandas data frame. 
-# This is our editable graph, you can change the parameters
-
-     # This is a hard coded graph
-    df = influx.querydata( "soil_moisture", graph_default["deviceID"] )
-    soil_temp_graph = px.line(df, x="time", y="soil_moisture", title="Soil Moisture")
+    df = influx.querydata( "soil_temperature", graph_default["deviceID"] )
+    soil_temp_graph = px.line(df, x="time", y="soil_temperature", title="Soil Temperature")
 
     df = influx.querydata( "air_temperature", graph_default["deviceID"] )
     air_temp_graph= px.line(df, x="time", y="air_temperature", title="Air Temperature")
 
     df = influx.querydata( "humidity", graph_default["deviceID"] )
     humidity_graph= px.line(df, x="time", y="humidity", title="humidity")
+
+    df = influx.querydata( "soil_moisture", graph_default["deviceID"] )
+    soil_moisture= px.line(df, x="time", y="soil_moisture", title="Soil Moisture")
 
     df = influx.querydata( "light", graph_default["deviceID"] )
     light_graph= px.line(df, x="time", y="light", title="light")
@@ -91,17 +97,9 @@ def generate_graphs(n):
             "soil_temp_graph": soil_temp_graph, 
             "air_temp_graph": air_temp_graph, 
             "humidity_graph": humidity_graph, 
+            "soil_moisture": soil_moisture,
             "light_graph": light_graph
             }
-
-
-# Updates inital graphs default query variables (measurment and bucket)
-@app.callback(Output("y-variable", "value"), [Input("y-variable", "value"), Input("bucket", "value")], prevent_initial_call=True)
-def updateForumData(y, b):
-    graph_default["bucket"] = b
-    graph_default["_field"] = y
-    return y
-
 
 # Server call used to write sensor data to InfluxDB
 # The methods in this function are inside influx_helper.py
@@ -112,14 +110,11 @@ def write():
     influx.write_to_influx(d)
     return {'result': "OK"}, 200
 
-
-
 @server.route("/notify", methods = ['POST'])
 def notify():
     print("notification received", flush=True)
     print(request.data, flush=True)
     return {'result': "OK"}, 200
-    # TODO: check the authorization and actually notify the user
 
 if __name__ == '__main__':
   app.run_server(host='0.0.0.0', port=5001, debug=True)

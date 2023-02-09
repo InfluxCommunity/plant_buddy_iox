@@ -12,14 +12,14 @@ class influxHelper:
             org = org,
             timeout = 30000
     )
-        
+        # This is our flight client setup, its how we will query from IOX
+        # we need to remove the Https:// from our host
         host = host.split("://")[1]
         self.flight_client = FlightSQLClient(host=host,
                          token=token,
                          metadata= {'bucket-name': bucket}
                          )
-
-    
+                         
         self.cloud_bucket = bucket
         self.cloud_org = org
         # Ref to serial sensor samples. 
@@ -50,7 +50,7 @@ class influxHelper:
 
  
 
-    # Wrapper function used to query InfluxDB> Calls Flux script with paramaters. Data query to data frame.
+    # Wrapper function used to query InfluxDB> Calls SQL script with paramaters. Data query to data frame.
     def querydata(self, sensor_name, deviceID) -> DataFrame:       
  
         query = self.flight_client.execute(f"SELECT {sensor_name}, time FROM sensor_data WHERE time > (NOW() - INTERVAL '2 HOURS') AND device_id='{deviceID}'")
